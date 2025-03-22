@@ -1,113 +1,143 @@
-import Image from "next/image";
-import { Geist, Geist_Mono } from "next/font/google";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
+// pages/index.js (updated)
+import { useState } from 'react';
+import Head from 'next/head';
+import FileUploader from '../components/FileUploader';
+import DocumentDisplay from '../components/DocumentDisplay';
+import WorkflowDisplay from '../components/WorkflowDisplay';
+import ProcessMetrics from '../components/ProcessMetrics';
+import ProcessOptimizer from '../components/ProcessOptimizer';
+import ProcessedFiles from '../components/ProcessedFiles';
 
 export default function Home() {
-  return (
-    <div
-      className={`${geistSans.variable} ${geistMono.variable} grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]`}
-    >
-      <main className="flex flex-col gap-8 row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-semibold">
-              src/pages/index.js
-            </code>
-            .
-          </li>
-          <li>Save and see your changes instantly.</li>
-        </ol>
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [error, setError] = useState(null);
+  const [results, setResults] = useState(null);
+  const [optimizationResults, setOptimizationResults] = useState(null);
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=default-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
+  const handleProcessingResults = (data) => {
+    setResults(data);
+    setIsProcessing(false);
+    setError(null);
+    // Reset optimization results when a new document is processed
+    setOptimizationResults(null);
+  };
+
+  const handleError = (errorMessage) => {
+    setError(errorMessage);
+    setIsProcessing(false);
+  };
+
+  const handleOptimizationResults = (data) => {
+    setOptimizationResults(data);
+  };
+
+  return (
+    <div className="min-h-screen bg-gray-100">
+      <Head>
+        <title>Process Analysis & Optimization</title>
+        <meta name="description" content="Process documents, generate workflows, and optimize for zero bureaucracy" />
+        <link rel="icon" href="/favicon.ico" />
+      </Head>
+
+      <main className="container mx-auto px-4 py-8">
+        <h1 className="text-3xl font-bold text-center mb-2 text-gray-800">Process Analysis & Optimization</h1>
+        <p className="text-center text-gray-600 mb-8">Analyze and optimize your business processes for maximum efficiency</p>
+
+        <div className="max-w-4xl mx-auto">
+          <div className="bg-white p-6 rounded-lg shadow-md mb-8">
+            <h2 className="text-xl font-semibold mb-4 text-gray-800">Upload Process Documents</h2>
+            <p className="text-gray-600 mb-6">
+              Upload up to 5 business process documents (PDF, Word, Excel, CSV) to analyze the workflow,
+              generate metrics, and receive AI-powered optimization suggestions to reduce bureaucracy
+              and streamline operations.
+            </p>
+
+            <FileUploader
+              onFileUpload={handleProcessingResults}
+              onError={handleError}
             />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:min-w-44"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=default-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+          </div>
+
+          {isProcessing && (
+            <div className="mt-8 text-center">
+              <div className="inline-block animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-600"></div>
+              <p className="mt-2 text-gray-600">Processing documents and analyzing workflow...</p>
+            </div>
+          )}
+
+          {error && !isProcessing && (
+            <div className="mt-8 p-4 bg-red-50 border border-red-200 rounded-md">
+              <h3 className="text-lg font-medium text-red-800">Processing Error</h3>
+              <p className="mt-2 text-sm text-red-600">{error}</p>
+            </div>
+          )}
+
+          {results && !isProcessing && (
+            <div className="mt-8 space-y-6">
+              {/* Processed Files Section (New) */}
+              {results.processedFiles && (
+                <ProcessedFiles processedFiles={results.processedFiles} />
+              )}
+
+              {/* Process Metrics Section */}
+              {results.processMetrics && (
+                <ProcessMetrics
+                  metrics={results.processMetrics}
+                  optimizedMetrics={optimizationResults?.metrics}
+                />
+              )}
+
+              {/* Process Optimizer Section */}
+              {results.processMetrics && results.workflowDiagram && (
+                <ProcessOptimizer
+                  originalMetrics={results.processMetrics}
+                  workflowDiagram={results.workflowDiagram}
+                  onOptimizationComplete={handleOptimizationResults}
+                />
+              )}
+
+              {/* Tabbed Document & Workflow Section */}
+              <div className="bg-white rounded-lg shadow-md overflow-hidden">
+                <div className="flex border-b">
+                  <button
+                    className="flex-1 px-4 py-3 text-center bg-white hover:bg-gray-50 font-medium text-gray-800 border-b-2 border-blue-600"
+                  >
+                    {results.documentCount > 1 ? 'Integrated Process Details' : 'Process Details'}
+                  </button>
+                </div>
+
+                <div className="p-6">
+                  {/* Process Document Section */}
+                  <div className="mb-8">
+                    <h3 className="text-lg font-semibold mb-4 text-gray-800">
+                      {results.documentCount > 1
+                        ? `Integrated Process Document (${results.documentCount} files)`
+                        : 'Process Document'}
+                    </h3>
+                    <DocumentDisplay document={results.formattedDocument} title="Process Document" />
+                  </div>
+
+                  {/* Workflow Diagram Section */}
+                  <div>
+                    <h3 className="text-lg font-semibold mb-4 text-gray-800">
+                      {results.documentCount > 1
+                        ? 'Integrated Process Workflow'
+                        : 'Process Workflow'}
+                    </h3>
+                    <WorkflowDisplay workflow={results.workflowDiagram} />
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       </main>
-      <footer className="row-start-3 flex gap-6 flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=default-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=default-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=default-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
+
+      <footer className="mt-12 py-6 border-t bg-white">
+        <div className="container mx-auto px-4 text-center text-gray-500">
+          <p>&copy; {new Date().getFullYear()} Process Analysis & Optimization - Zero Bureaucracy Initiative</p>
+        </div>
       </footer>
     </div>
   );
